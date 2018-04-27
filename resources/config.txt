@@ -1,0 +1,4 @@
+Plane-1, Regular, Normal, 3
+Plane-2, Regular, Normal, 4
+Plane-3, Large, Normal, 4
+Plane-4, Large, Emergency, 4
