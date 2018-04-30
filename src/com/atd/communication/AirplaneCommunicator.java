@@ -4,6 +4,7 @@ import com.atd.simulation.Airplane;
 import com.atd.simulation.RunwayState;
 
 /**
+ * Interface of Communicator for {@link Airplane}s.
  */
 public interface AirplaneCommunicator {
 

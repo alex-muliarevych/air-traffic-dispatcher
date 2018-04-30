@@ -5,14 +5,15 @@ import com.atd.simulation.RunwayState;
 
 import java.util.regex.Matcher;
 
-import static com.atd.communication.data.Message.RUNAWAY_X;
+import static com.atd.communication.data.Message.RUNWAY_X;
 
 /**
+ * Util methods for message processing.
  */
 public class MessageUtils {
 
     public static RunwayState.RunwayType getRunwayFromMessage(Message message) {
-        Matcher m = RUNAWAY_X.matcher(message.getText());
+        Matcher m = RUNWAY_X.matcher(message.getText());
         if (!m.find()) {
             throw new RuntimeException(String.format("Incorrect message was sent: '%s'", message.toString()));
         }

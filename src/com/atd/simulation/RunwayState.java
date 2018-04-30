@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * Tracking of runway state, can't be monitoring from airplane or traffic controller.
+ * Used to track for critical situations, like crash of airplanes, when 2 of them are landing at same time on a same
+ * runway.
  */
 @Slf4j
 public class RunwayState {

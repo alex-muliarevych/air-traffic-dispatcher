@@ -1,5 +1,6 @@
 package com.atd.communication;
 
+import com.atd.simulation.Airplane;
 import com.atd.simulation.data.LandingRequest;
 import com.atd.communication.data.Message;
 import com.atd.simulation.RunwayState;
@@ -8,6 +9,7 @@ import com.atd.simulation.TrafficController;
 import java.util.Map;
 
 /**
+ * Interface of Communicator for {@link TrafficController}s.
  */
 public interface TrafficControllerCommunicator {
 

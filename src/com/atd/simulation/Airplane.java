@@ -12,6 +12,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
+ * Thread task, which represent behavior of airplane.
+ * Could request for normal or emergency landing to {@link TrafficController}, execute landing on a runway or waiting
+ * for it depends on response message from traffic controller.
  */
 @Slf4j
 public class Airplane implements Callable<Void>, CommunicatorParticipant {
@@ -77,6 +80,9 @@ public class Airplane implements Callable<Void>, CommunicatorParticipant {
         }
     }
 
+    /**
+     * Asynchronous message receiving to queue for further processing.
+     */
     public void send(Message message) throws InterruptedException {
         messages.put(message);
     }

@@ -6,6 +6,7 @@ import lombok.Getter;
 import java.util.LinkedList;
 
 /**
+ * Storage of landing requests.
  */
 @Getter
 public class LandingRequestStorage {

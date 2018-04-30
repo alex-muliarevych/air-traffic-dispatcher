@@ -9,10 +9,14 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
+ * Message used for synchronisation type communication between 2 traffic controllers.
  */
 @Getter
 @Builder
 public class ControllerSynchMessage implements CommunicationMessage {
+    /**
+     * Container of {@link LandingRequest}s mapped to each runway, defined for processing by traffic controller.
+     */
     private Map<RunwayState.RunwayType, LandingRequest> requestForProcessing;
     private Message message;
 

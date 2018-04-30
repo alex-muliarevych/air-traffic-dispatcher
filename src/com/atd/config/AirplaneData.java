@@ -20,6 +20,9 @@ public class AirplaneData {
         LARGE(7),
         REGULAR(5);
 
+        /**
+         * Time in second required to execute landing on a runway by airplane.
+         */
         private int landingTime;
 
         AirplaneType(int landingTime) {

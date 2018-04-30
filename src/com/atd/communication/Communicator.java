@@ -16,6 +16,7 @@ import static com.atd.communication.data.Message.MAYDAY;
 import static com.atd.communication.data.Message.READY_TO_LAND;
 
 /**
+ * Communicator, used as message dispatcher and router.
  */
 @Slf4j
 public class Communicator implements AirplaneCommunicator, TrafficControllerCommunicator {
@@ -23,8 +24,15 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
     private Map<String, Airplane> airplaneByNames = new HashMap<>();
     private Map<Integer, TrafficController> trafficControllersById = new HashMap<>();
 
+    /**
+     * {@link TrafficController}'s index counter used during round-robin selection strategy.
+     */
     private Integer controllerCounter = 0;
 
+    /**
+     * Returns {@link Message.MessageBuilder} with populated receiver and sender based on passed-in
+     * {@code controllerId} and {@code airplaneName}, direction is defined by option {@code toController}.
+     */
     private Message.MessageBuilder prepareBaseMessageBuilder(Integer controllerId, String airplaneName,
                                                              boolean toController) {
         TrafficController trafficController = trafficControllersById.get(controllerId);
@@ -34,6 +42,10 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
                 .sender(toController ? airplane : trafficController);
     }
 
+    /**
+     * Returns {@link Message.MessageBuilder} with populated receiver and sender based on passed-in
+     * {@code targetControllerId} and {@code controllerId}.
+     */
     private Message.MessageBuilder prepareBaseMessageBuilder(Integer targetControllerId, Integer controllerId) {
         return Message.builder()
                 .receiver(trafficControllersById.get(targetControllerId))
@@ -41,7 +53,7 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
     }
 
     /**
-     * Round-robin strategy of traffic controller selection for landing request processing.
+     * Round-robin strategy of traffic controller selection for {@link LandingRequest} processing.
      */
     private int selectTrafficControllerForRequestProcessing() {
         controllerCounter = (controllerCounter + 1) % 2;
@@ -115,7 +127,10 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
         airplaneByNames.get(airplaneName).send(message);
     }
 
-    public boolean allAirplanesLanded() {
+    /**
+     * Returns 'true' if all {@link Airplane}s were landed and simulation could be finished, otherwise returns 'false'.
+     */
+    private boolean allAirplanesLanded() {
         return airplaneByNames.values().stream().allMatch(Airplane::isLanded);
     }
 }
