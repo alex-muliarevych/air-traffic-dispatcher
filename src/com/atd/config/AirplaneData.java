@@ -15,9 +15,16 @@ public class AirplaneData {
     // Offset from start of program till request for landing.
     private final Integer noOfSeconds;
 
+    @Getter
     public enum AirplaneType {
-        LARGE,
-        REGULAR
+        LARGE(7),
+        REGULAR(5);
+
+        private int landingTime;
+
+        AirplaneType(int landingTime) {
+            this.landingTime = landingTime;
+        }
     }
 
     public enum LandingType {

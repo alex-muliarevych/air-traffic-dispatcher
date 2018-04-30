@@ -1,17 +1,19 @@
 package com.atd.simulation;
 
+import com.atd.communication.Communicator;
 import com.atd.config.AirplaneData;
 import com.atd.config.ConfigurationReader;
+import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 @Slf4j
 public class TrafficSimulationExecutor {
@@ -25,10 +27,22 @@ public class TrafficSimulationExecutor {
 
         ExecutorService executorService = Executors.newFixedThreadPool(airplaneData.size() + 2);
 
+
+        RunwayState runwayState = new RunwayState();
+        Communicator communicator = new Communicator();
+
+        // Initialize tasks.
+        List<TrafficController> trafficControllers =
+                IntStream.of(0, 1)
+                        .mapToObj(id -> new TrafficController(id, communicator))
+                        .collect(Collectors.toList());
+        List<Airplane> airplanes =
+                airplaneData.stream().map(data -> new Airplane(data, communicator, runwayState))
+                        .collect(Collectors.toList());
+
         // Run execution of tasks.
-        executorService.invokeAll(
-                Stream.concat(airplaneData.stream().map(Airplane::new),
-                        IntStream.of(0, 1).mapToObj(TrafficController::new))
-                        .collect(Collectors.toList()));
+        List<Callable<Void>> tasks =
+                ImmutableList.<Callable<Void>>builder().addAll(trafficControllers).addAll(airplanes).build();
+        executorService.invokeAll(tasks);
     }
 }
