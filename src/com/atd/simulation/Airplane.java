@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Thread task, which represent behavior of airplane.
@@ -26,6 +27,10 @@ public class Airplane implements Callable<Void>, CommunicatorParticipant {
     private RunwayState runawayState;
     @Getter
     private boolean landed;
+    @Getter
+    private Long executionTime;
+    @Getter
+    private Integer chosenRunwayIndex;
 
     public Airplane(AirplaneData data, AirplaneCommunicator communicator, RunwayState runawayState) {
         messages = new LinkedBlockingQueue<>();
@@ -43,14 +48,15 @@ public class Airplane implements Callable<Void>, CommunicatorParticipant {
         Thread.sleep(data.getNoOfSeconds() * 1000);
         log.debug("{} is going to land.", data.getAirplaneName());
         try {
-            main();
+            executionTime = TimeUnit.NANOSECONDS.toSeconds(main());
         } catch (Exception ex) {
             log.error("Execution failed", ex.getCause());
         }
         return null;
     }
 
-    private void main() throws InterruptedException {
+    private long main() throws InterruptedException {
+        long startTime = System.nanoTime();
         Integer controllerId = communicator.requestForLanding(data.getAirplaneName());
         while (true) {
             if (messages.isEmpty()) {
@@ -59,7 +65,7 @@ public class Airplane implements Callable<Void>, CommunicatorParticipant {
             while (!messages.isEmpty()) {
                 Message message = messages.poll();
                 if (message.getType() == Message.MessageType.TERMINATED) {
-                    return;
+                    return System.nanoTime() - startTime;
                 }
                 switch (message.getType()) {
                     case WAITING_AROUND:
@@ -67,6 +73,7 @@ public class Airplane implements Callable<Void>, CommunicatorParticipant {
                         break;
                     case LAND_ON_A_RUNWAY:
                         RunwayState.RunwayType runwayType = MessageUtils.getRunwayFromMessage(message);
+                        chosenRunwayIndex = runwayType.getIndex();
                         runawayState.landOnRunaway(data.getAirplaneName(), runwayType);
                         // Execute landing.
                         Thread.sleep(data.getAirplaneType().getLandingTime() * 1000);
@@ -74,7 +81,7 @@ public class Airplane implements Callable<Void>, CommunicatorParticipant {
 
                         communicator.confirmOfSuccessLanding(controllerId, data.getAirplaneName(), runwayType);
                         landed = true;
-                        return;
+                        return System.nanoTime() - startTime;
                 }
             }
         }
