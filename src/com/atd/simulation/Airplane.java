@@ -38,7 +38,7 @@ public class Airplane implements Callable<Void>, CommunicatorParticipant {
         this.data = data;
         this.communicator = communicator;
         this.runawayState = runawayState;
-        communicator.registerForCommunication(data.getAirplaneName(), this);
+        communicator.registerForCommunication(this);
     }
 
     @Override

@@ -1,16 +1,17 @@
 package com.atd.communication;
 
 import com.atd.communication.data.ControllerSynchMessage;
-import com.atd.simulation.data.LandingRequest;
 import com.atd.communication.data.Message;
 import com.atd.config.AirplaneData;
 import com.atd.simulation.Airplane;
 import com.atd.simulation.RunwayState;
 import com.atd.simulation.TrafficController;
+import com.atd.simulation.data.LandingRequest;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.atd.communication.data.Message.MAYDAY;
 import static com.atd.communication.data.Message.READY_TO_LAND;
@@ -21,19 +22,19 @@ import static com.atd.communication.data.Message.READY_TO_LAND;
 @Slf4j
 public class Communicator implements AirplaneCommunicator, TrafficControllerCommunicator {
 
-    private Map<String, Airplane> airplaneByNames = new HashMap<>();
-    private Map<Integer, TrafficController> trafficControllersById = new HashMap<>();
+    private ConcurrentMap<String, Airplane> airplaneByNames = new ConcurrentHashMap<>();
+    private ConcurrentMap<Integer, TrafficController> trafficControllersById = new ConcurrentHashMap<>();
 
     /**
      * {@link TrafficController}'s index counter used during round-robin selection strategy.
      */
-    private Integer controllerCounter = 0;
+    private int controllerCounter = 0;
 
     /**
      * Returns {@link Message.MessageBuilder} with populated receiver and sender based on passed-in
      * {@code controllerId} and {@code airplaneName}, direction is defined by option {@code toController}.
      */
-    private Message.MessageBuilder prepareBaseMessageBuilder(Integer controllerId, String airplaneName,
+    private Message.MessageBuilder prepareBaseMessageBuilder(int controllerId, String airplaneName,
                                                              boolean toController) {
         TrafficController trafficController = trafficControllersById.get(controllerId);
         Airplane airplane = airplaneByNames.get(airplaneName);
@@ -46,7 +47,7 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
      * Returns {@link Message.MessageBuilder} with populated receiver and sender based on passed-in
      * {@code targetControllerId} and {@code controllerId}.
      */
-    private Message.MessageBuilder prepareBaseMessageBuilder(Integer targetControllerId, Integer controllerId) {
+    private Message.MessageBuilder prepareBaseMessageBuilder(int targetControllerId, int controllerId) {
         return Message.builder()
                 .receiver(trafficControllersById.get(targetControllerId))
                 .sender(trafficControllersById.get(controllerId));
@@ -61,13 +62,13 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
     }
 
     @Override
-    public void registerForCommunication(String airplaneName, Airplane airplane) {
-        airplaneByNames.put(airplaneName, airplane);
+    public void registerForCommunication(Airplane airplane) {
+        airplaneByNames.put(airplane.getData().getAirplaneName(), airplane);
     }
 
     @Override
-    public void registerForCommunication(Integer controllerId, TrafficController controller) {
-        trafficControllersById.put(controllerId, controller);
+    public void registerForCommunication(TrafficController controller) {
+        trafficControllersById.put(controller.getId(), controller);
     }
 
     @Override
@@ -78,7 +79,7 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
             trafficControllersById.get(0).send(Message.builder().type(Message.MessageType.TERMINATED).build());
             trafficControllersById.get(1).send(Message.builder().type(Message.MessageType.TERMINATED).build());
         }
-        Integer targetControllerId = controllerId == 0 ? 1 : 0;
+        int targetControllerId = controllerId == 0 ? 1 : 0;
         Message message =
                 prepareBaseMessageBuilder(targetControllerId, controllerId)
                         .text("Lets synchronise decisions")
@@ -91,7 +92,7 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
     }
 
     @Override
-    public Integer requestForLanding(String airplaneName) throws InterruptedException {
+    public int requestForLanding(String airplaneName) throws InterruptedException {
         int controllerId = selectTrafficControllerForRequestProcessing();
         Message.MessageBuilder messageBuilder = prepareBaseMessageBuilder(controllerId, airplaneName, true);
         Message message;
@@ -106,7 +107,7 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
     }
 
     @Override
-    public void confirmOfSuccessLanding(Integer controllerId, String airplaneName,
+    public void confirmOfSuccessLanding(int controllerId, String airplaneName,
                                         RunwayState.RunwayType runwayType) throws InterruptedException {
         Message.MessageBuilder messageBuilder = prepareBaseMessageBuilder(controllerId, airplaneName, true);
         Message message =
@@ -119,7 +120,7 @@ public class Communicator implements AirplaneCommunicator, TrafficControllerComm
     }
 
     @Override
-    public void sendResponseToAirplane(Integer controllerId, String airplaneName,
+    public void sendResponseToAirplane(int controllerId, String airplaneName,
                                        Message.MessageType type, String text) throws InterruptedException {
         Message.MessageBuilder messageBuilder = prepareBaseMessageBuilder(controllerId, airplaneName, false);
         Message message = messageBuilder.type(type).text(text).build();

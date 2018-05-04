@@ -9,6 +9,7 @@ import com.atd.simulation.data.LandingRequest;
 import com.atd.simulation.data.OtherTrafficControllerProposals;
 import com.atd.utils.MessageUtils;
 import com.atd.utils.RequestUtils;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -33,7 +34,8 @@ import static com.atd.communication.data.Message.PLEASE_LAND_ON_A_RUNWAY_X;
 @Slf4j
 public class TrafficController implements Callable<Void>, CommunicatorParticipant {
 
-    private Integer id;
+    @Getter
+    private int id;
     private final LandingRequestStorage landingRequestStorage;
     /**
      * Sorted by priority message queue for processing. All messages are passed asynchronously.
@@ -43,14 +45,14 @@ public class TrafficController implements Callable<Void>, CommunicatorParticipan
     private OtherTrafficControllerProposals otherControllerProposal;
     private Boolean[] runwayAvailabilityMonitors;
 
-    public TrafficController(Integer id, TrafficControllerCommunicator communicator) {
+    public TrafficController(int id, TrafficControllerCommunicator communicator) {
         this.landingRequestStorage = new LandingRequestStorage();
         messages = new PriorityBlockingQueue<>();
         this.id = id;
         this.communicator = communicator;
         otherControllerProposal = new OtherTrafficControllerProposals();
         runwayAvailabilityMonitors = new Boolean[] {true , true};
-        communicator.registerForCommunication(id, this);
+        communicator.registerForCommunication(this);
     }
 
     @Override
@@ -188,8 +190,8 @@ public class TrafficController implements Callable<Void>, CommunicatorParticipan
                 if (matchRunway != null) {
                     availableRunwayToRequest.put(matchRunway, request);
                     runwayStates[matchRunway.getIndex()] = false;
-                    if (RequestUtils.anyRunwayAvailable(runwayStates)) {
-                        break;
+                    if (!RequestUtils.anyRunwayAvailable(runwayStates)) {
+                        return;
                     }
                 }
             }
@@ -225,8 +227,9 @@ public class TrafficController implements Callable<Void>, CommunicatorParticipan
             while (!otherControllerProposal.updateProposals(requestMap)) {
                 Thread.sleep(50);
             }
+        } else {
+            messages.put(message);
         }
-        messages.put(message);
     }
 
     @Override
